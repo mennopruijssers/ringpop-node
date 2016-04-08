@@ -69,6 +69,7 @@ var safeParse = require('./lib/util').safeParse;
 var validateHostPort = require('./lib/util').validateHostPort;
 var sendJoin = require('./lib/gossip/joiner.js').joinCluster;
 var TracerStore = require('./lib/trace/store.js');
+var middleware = require('./server/middleware.js');
 
 var HOST_PORT_PATTERN = /^(\d+.\d+.\d+.\d+):\d+$/;
 var MEMBERSHIP_UPDATE_FLUSH_INTERVAL = 5000;
@@ -247,8 +248,10 @@ RingPop.prototype.destroy = function destroy() {
 };
 
 RingPop.prototype.setupChannel = function setupChannel() {
-    this.client = new RingpopClient(this, this.channel);
-    this.server = new RingpopServer(this, this.channel);
+    this.client = new RingpopClient(this, this.channel, timers, Date,
+        [middleware.tombstonePatchClientMiddleware]);
+    this.server = new RingpopServer(this, this.channel,
+        [middleware.tombstonePatchServerMiddleware]);
 };
 
 /*
